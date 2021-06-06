@@ -12,7 +12,7 @@ This library rely on the Smithay projects to work and their structures are retur
 - https://smithay.github.io/wayland-rs/wayland_server/
 - https://smithay.github.io/wayland-rs/wayland_protocols/
 
-The Smithay developer work allow to Rust to enter in the Wayland world with a simple and clean interface,
+The Smithay developers's work allow to Rust to enter in the Wayland world with a simple and clean interface,
 so if you like it, consider contributing to them to improve the ecosystem.
 
 Based on the enabled features, user can select which part of the Wayland protocol he is going to support:
