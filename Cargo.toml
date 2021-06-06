@@ -1,0 +1,22 @@
+[package]
+name = "embeddable_wayland_server"
+version = "0.1.0"
+authors = ["Fabio Sgamma <uniformbuffer3@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wayland-server = "*"
+wayland-protocols = {version="*",features=["server"]}
+
+
+[dev-dependencies]
+nix = "*"
+libc = "*"
+signal-hook = "*"
+
+[features]
+default = ["xdg_shell"]
+xdg_shell = []
+
