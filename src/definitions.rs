@@ -1,8 +1,9 @@
-pub use wayland_server::{protocol,Main,Interface,Display,Filter,Global};
+pub use wayland_server::{protocol,Main,Resource,Interface,Display,Filter,Global,Client};
 pub use protocol::{
     wl_compositor::WlCompositor,
     wl_subcompositor::WlSubcompositor,
-    wl_shm::WlShm,
+    wl_shm::{WlShm,Format},
+    wl_shm_pool::WlShmPool,
     wl_seat::WlSeat,
     wl_output::WlOutput,
     wl_surface::WlSurface,
@@ -123,6 +124,7 @@ macro_rules! request_enum(
                 $evt_name { request: <$iface as $crate::Interface>::Request, object: $crate::Main<$iface> },
             )*
             $(
+                $(#[$member_attrs2])*
                 $name($value),
             )*
         }
@@ -136,6 +138,7 @@ macro_rules! request_enum(
             }
         )*
         $(
+            $(#[$member_attrs2])*
             impl From<$value> for $enu {
                 fn from(value: $value) -> $enu {
                     $enu::$name(value)
@@ -146,50 +149,111 @@ macro_rules! request_enum(
 );
 
 request_enum!(
-    #[derive(Debug)]GlobalInstantiation | |
-    CompositorInstantiation => (Main<WlCompositor>,u32),
-    SubcompositorInstantiation => (Main<WlSubcompositor>,u32),
-    ShmInstantiation => (Main<WlShm>,u32),
-    SeatInstantiation => (Main<WlSeat>,u32),
-    PointerInstantiation => (Main<WlSeat>,Main<WlPointer>),
-    KeyboardInstantiation => (Main<WlSeat>,Main<WlKeyboard>),
-    TouchInstantiation => (Main<WlSeat>,Main<WlTouch>),
-    OutputInstantiation => (Main<WlOutput>,u32),
-    ShellInstantiation => (Main<WlShell>,u32),
-    #[cfg(feature="xdg_shell")] XdgWmBaseInstantiation => (Main<XdgWmBase>,u32),
-    #[cfg(feature="xdg_shell")] XdgSurfaceInstantiation => (Main<XdgSurface>,u32),
-    #[cfg(feature="xdg_shell")] XdgPopupInstantiation => (Main<XdgPopup>,u32),
-    #[cfg(feature="xdg_shell")] XdgPositionerInstantiation => (Main<XdgPositioner>,u32),
-    #[cfg(feature="xdg_shell")] XdgToplevelInstantiation => (Main<XdgToplevel>,u32)
+    #[derive(Debug)]Instantiation | |
+    Compositor => (Main<WlCompositor>,u32),
+    Subcompositor => (Main<WlSubcompositor>,u32),
+    Shell => (Main<WlShell>,u32),
+
+    Seat => (Main<WlSeat>,u32),
+    Pointer => (Main<WlSeat>,Main<WlPointer>),
+    Keyboard => (Main<WlSeat>,Main<WlKeyboard>),
+    Touch => (Main<WlSeat>,Main<WlTouch>),
+    Output => (Main<WlOutput>,u32),
+
+    #[cfg(feature="shm")] Shm => (Main<WlShm>,u32),
+    #[cfg(feature="shm")] ShmPool => (Main<WlShmPool>,u32),
+
+    #[cfg(feature="xdg_shell")] XdgWmBase => (Main<XdgWmBase>,u32),
+    #[cfg(feature="xdg_shell")] XdgSurface => (Main<XdgSurface>,u32),
+    #[cfg(feature="xdg_shell")] XdgPopup => (Main<XdgPopup>,u32),
+    #[cfg(feature="xdg_shell")] XdgPositioner => (Main<XdgPositioner>,u32),
+    #[cfg(feature="xdg_shell")] XdgToplevel => (Main<XdgToplevel>,u32)
+);
+
+request_enum!(
+    #[derive(Debug)]Destruction | |
+    Compositor => Resource<WlCompositor>,
+    Subcompositor => Resource<WlSubcompositor>,
+    Shell => Resource<WlShell>,
+
+    Seat => Resource<WlSeat>,
+    Pointer => Resource<WlPointer>,
+    Keyboard => Resource<WlKeyboard>,
+    Touch => Resource<WlTouch>,
+    Output => Resource<WlOutput>,
+
+    #[cfg(feature="shm")] Shm => Resource<WlShm>,
+    #[cfg(feature="shm")] ShmPool => Resource<WlShmPool>,
+
+    #[cfg(feature="xdg_shell")] XdgWmBase => Resource<XdgWmBase>,
+    #[cfg(feature="xdg_shell")] XdgSurface => Resource<XdgSurface>,
+    #[cfg(feature="xdg_shell")] XdgPopup => Resource<XdgPopup>,
+    #[cfg(feature="xdg_shell")] XdgPositioner => Resource<XdgPositioner>,
+    #[cfg(feature="xdg_shell")] XdgToplevel => Resource<XdgToplevel>
 );
 
 request_enum!(
     #[derive(Debug)] WaylandRequest |
     Compositor => WlCompositor,
     Subcompositor => WlSubcompositor,
-    Shm => WlShm,
+    Shell => WlShell,
+
     Seat => WlSeat,
     Pointer => WlPointer,
     Keyboard => WlKeyboard,
     Touch => WlTouch,
     Output => WlOutput,
-    Shell => WlShell,
+
+    #[cfg(feature="shm")] Shm => WlShm,
+    #[cfg(feature="shm")] ShmPool => WlShmPool,
+
     #[cfg(feature="xdg_shell")] XdgWmBase => XdgWmBase,
     #[cfg(feature="xdg_shell")] XdgSurface => XdgSurface,
     #[cfg(feature="xdg_shell")] XdgPopup => XdgPopup,
     #[cfg(feature="xdg_shell")] XdgPositioner => XdgPositioner,
     #[cfg(feature="xdg_shell")] XdgToplevel => XdgToplevel |
-    GlobalInstantiation => GlobalInstantiation
+    Instantiation => Instantiation,
+    Destruction => Destruction
 );
 
 
+#[derive(Default)]
+pub struct ClientResources {
+    pub compositor: Option<Main<WlCompositor>>,
+    pub subcompositor: Option<Main<WlSubcompositor>>,
+    pub shells: Vec<Main<WlShell>>,
+
+    pub seats: Vec<Seat>,
+    pub outputs: Vec<Main<WlOutput>>,
+
+    #[cfg(feature="shm")]
+    pub shm: Option<Main<WlShm>>,
+    #[cfg(feature="shm")]
+    pub shm_pools: Vec<Main<WlShmPool>>,
+
+    #[cfg(feature="xdg_shell")]
+    pub xdg_wm_base: Option<Main<XdgWmBase>>,
+    #[cfg(feature="xdg_shell")]
+    pub xdg_surfaces: Vec<Main<XdgSurface>>,
+    #[cfg(feature="xdg_shell")]
+    pub xdg_popups: Vec<Main<XdgPopup>>,
+    #[cfg(feature="xdg_shell")]
+    pub xdg_positioners: Vec<Main<XdgPositioner>>,
+    #[cfg(feature="xdg_shell")]
+    pub xdg_top_levels: Vec<Main<XdgToplevel>>
+}
+
 pub struct Seat {
-    pub global: Global<WlSeat>,
+    pub handle: Main<WlSeat>,
     pub pointers: Vec<Main<WlPointer>>,
     pub keyboards: Vec<Main<WlKeyboard>>,
     pub touchs: Vec<Main<WlTouch>>,
 }
-
-pub struct Output {
-    pub global: Global<WlOutput>
+impl Seat {
+    pub fn new(handle: Main<WlSeat>)->Self {
+        let pointers = Vec::new();
+        let keyboards = Vec::new();
+        let touchs = Vec::new();
+        Self {handle,pointers,keyboards,touchs}
+    }
 }

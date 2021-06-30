@@ -1,5 +1,5 @@
 [package]
-name = "embeddable_wayland_server"
+name = "embedded_wayland_server"
 version = "0.1.0"
 authors = ["Fabio Sgamma <uniformbuffer3@gmail.com>"]
 edition = "2018"
@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 wayland-server = "*"
 wayland-protocols = {version="*",features=["server"]}
-
+slab = "*"
 
 [dev-dependencies]
 nix = "*"
@@ -17,6 +17,7 @@ libc = "*"
 signal-hook = "*"
 
 [features]
-default = ["xdg_shell"]
+default = ["shm"]
+shm = []
 xdg_shell = []
 
