@@ -1,3 +1,4 @@
 target/
 .buildconfig
 Cargo.lock
+trash/

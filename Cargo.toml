@@ -7,8 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-wayland-server = "*"
-wayland-protocols = {version="*",features=["server"]}
+#wayland-server = "*"
+#wayland-protocols = {version="*",features=["server"]}
+smithay = {git="https://github.com/Smithay/smithay", branch="master", features=["wayland_frontend"], default-features=false}
 slab = "*"
 
 [dev-dependencies]
@@ -17,7 +18,11 @@ libc = "*"
 signal-hook = "*"
 
 [features]
-default = ["shm"]
+default = ["subcompositor","shm","xdg_shell"]#,"dma_buf","explicit_synchronization","drag_and_drop"
+subcompositor = []
 shm = []
 xdg_shell = []
+dma_buf = []
+drag_and_drop = []
+explicit_synchronization = []
 
