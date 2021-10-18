@@ -37,7 +37,8 @@ pub use smithay::{
         output::{Output,PhysicalProperties},
         seat::{Seat,CursorImageStatus,XkbConfig},
         data_device::{init_data_device, default_action_chooser},
-        explicit_synchronization::init_explicit_synchronization_global
+        explicit_synchronization::init_explicit_synchronization_global,
+        data_device::DataDeviceEvent
     },
     backend::allocator::{Format as DrmFormat,dmabuf::Dmabuf},
     utils::DeadResource
@@ -55,8 +56,12 @@ pub enum SeatRequest {
 pub enum Request {
     Seat{seat: Seat, request: SeatRequest},
     Commit(WlSurface),
+    #[cfg(feature="xdg_shell")]
     XdgRequest(XdgRequest),
-    Dmabuf(Dmabuf)
+    #[cfg(feature="dma_buf")]
+    Dmabuf(Dmabuf),
+    #[cfg(feature="dnd")]
+    Dnd(DataDeviceEvent)
 }
 
 #[derive(Default)]

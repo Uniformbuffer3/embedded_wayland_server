@@ -43,8 +43,8 @@ pub struct EmbeddedWaylandServer {
     #[cfg(feature="dma_buf")]
     zwp_linux_dmabuf_v1_global: Global<ZwpLinuxDmabufV1>,
 
-    #[cfg(feature="drag_and_drop")]
-    drag_and_drop_global: Global<WlDataDeviceManager>,
+    #[cfg(feature="dnd")]
+    dnd_global: Global<WlDataDeviceManager>,
 
     #[cfg(feature="explicit_synchronization")]
     explicit_synchronization_global: Global<ZwpLinuxExplicitSynchronizationV1>
@@ -63,16 +63,6 @@ impl EmbeddedWaylandServer {
 
 
         let (compositor_global,subcompositor_global) = smithay::wayland::compositor::compositor_init(&mut display,|surface, mut dispatch_data|{
-            with_states(&surface,|surface_data|{
-                let pending = surface_data.cached_state.pending::<SurfaceAttributes>();
-                println!("From init_compositor callback {:#?}: {:#?}",surface,pending);
-
-                if surface_data.cached_state.has::<SurfaceAttributes>() {
-                    println!("Current: {:#?}",surface_data.cached_state.current::<SurfaceAttributes>());
-                }
-                else{println!("Current: None")}
-            }).unwrap();
-
             let dispatch_context: &mut Rc<RefCell<DispatchContext>> = dispatch_data.get().unwrap();
             dispatch_context.borrow_mut().requests.push(Request::Commit(surface));
         },None);
@@ -82,40 +72,6 @@ impl EmbeddedWaylandServer {
 
         #[cfg(feature="xdg_shell")]
         let (xdg_shell_state,xdg_wm_base_global) = smithay::wayland::shell::xdg::xdg_shell_init(&mut display,|request,mut dispatch_data|{
-            match &request {
-                XdgRequest::NewToplevel {
-                    surface
-                }=>{
-                    add_commit_hook(surface.get_surface().unwrap(),|surface|{
-                        with_states(&surface,|surface_data|{
-                            let pending = surface_data.cached_state.pending::<SurfaceAttributes>();
-                            println!("From the commit hook for {:#?}: {:#?}",surface,pending);
-
-                            if surface_data.cached_state.has::<SurfaceAttributes>() {
-                                println!("Current: {:#?}",surface_data.cached_state.current::<SurfaceAttributes>());
-                            }
-                            else{println!("Current: None")}
-                        }).unwrap();
-                    });
-
-                    surface.with_pending_state(|surface_state|{
-                        surface_state.size = Some((400,400).into());
-                    }).unwrap();
-                    surface.send_configure();
-
-                }
-                XdgRequest::AckConfigure{
-                    surface: _,
-                    configure: Configure::Toplevel(_configure),
-                    ..
-                }=>{
-
-                }
-                _=>{}
-            }
-
-
-
             let dispatch_context: &mut Rc<RefCell<DispatchContext>> = dispatch_data.get().unwrap();
             dispatch_context.borrow_mut().requests.push(Request::XdgRequest(request));
         },None);
@@ -127,15 +83,18 @@ impl EmbeddedWaylandServer {
             true
         },None);
 
-        #[cfg(feature="drag_and_drop")]
-        let drag_and_drop_global = init_data_device(
-            &mut display,
-            |dnd_event| {
-
-            },
-            default_action_chooser,
-            None
-        );
+        #[cfg(feature="dnd")]
+        let dnd_global = {
+            let dispatch_context = dispatch_context.clone();
+            init_data_device(
+                &mut display,
+                move|dnd_event| {
+                    dispatch_context.borrow_mut().requests.push(Request::Dnd(dnd_event));
+                },
+                default_action_chooser,
+                None
+            )
+        };
 
         #[cfg(feature="explicit_synchronization")]
         let explicit_synchronization_global = init_explicit_synchronization_global(&mut display,None);
@@ -162,8 +121,8 @@ impl EmbeddedWaylandServer {
             #[cfg(feature="dma_buf")]
             zwp_linux_dmabuf_v1_global,
 
-            #[cfg(feature="drag_and_drop")]
-            drag_and_drop_global,
+            #[cfg(feature="dnd")]
+            dnd_global,
 
             #[cfg(feature="explicit_synchronization")]
             explicit_synchronization_global,
@@ -248,6 +207,10 @@ impl EmbeddedWaylandServer {
         let name = name.into();
         self.output_globals.remove(&name);
     }
+    pub fn list_outputs(&self)->impl Iterator<Item=&String>{
+        self.output_globals.keys()
+    }
+
 }
 
 

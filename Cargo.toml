@@ -18,11 +18,11 @@ libc = "*"
 signal-hook = "*"
 
 [features]
-default = ["subcompositor","shm","xdg_shell"]#,"dma_buf","explicit_synchronization","drag_and_drop"
+default = ["subcompositor","shm","xdg_shell","dma_buf","explicit_synchronization","dnd"]
 subcompositor = []
 shm = []
 xdg_shell = []
 dma_buf = []
-drag_and_drop = []
+dnd = []
 explicit_synchronization = []
 

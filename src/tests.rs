@@ -1,9 +1,5 @@
-extern fn handle_sigint(_signal: libc::c_int) {
-    panic!("SIGINT detected, terminating!");
-}
-
-use std::sync::{Arc,atomic::{Ordering,AtomicBool}};
-
+use std::sync::{atomic::{Ordering,AtomicBool}};
+use crate::Request::XdgRequest;
 #[test]
 fn create_server(){
     let term_signal = Arc::new(AtomicBool::new(false));
@@ -27,17 +23,24 @@ fn create_server(){
 
         requests.iter().for_each(|request|{
             match request{
+                #[cfg(feature="xdg_shell")]
+                XdgRequest(surface_request)=>{
+                    match surface_request {
+                        XdgRequest::NewToplevel{surface}=>{
+                            surface.send_configure();
+                        }
+                        _=>()
+                    }
+                }
                 Request::Commit(surface)=>{
-                    /*
                     with_states(&surface,|surface_data|{
                         let pending = surface_data.cached_state.pending::<SurfaceAttributes>();
-                        println!("From outside for {:#?}: {:#?}",surface,pending);
+                        println!("Committing {:#?}: {:#?}",surface,pending);
 
                         if surface_data.cached_state.has::<SurfaceAttributes>() {
                             println!("Current: {:#?}",surface_data.cached_state.current::<SurfaceAttributes>());
                         }
                     }).unwrap();
-                    */
                 }
                 _=>{}
             }
