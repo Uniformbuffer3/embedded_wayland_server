@@ -10,7 +10,10 @@ edition = "2018"
 #wayland-server = "*"
 #wayland-protocols = {version="*",features=["server"]}
 smithay = {git="https://github.com/Smithay/smithay", branch="master", features=["wayland_frontend"], default-features=false}
+wayland-cursor = "*"
 slab = "*"
+log = "*"
+env_logger = "*"
 
 [dev-dependencies]
 nix = "*"
@@ -18,7 +21,7 @@ libc = "*"
 signal-hook = "*"
 
 [features]
-default = ["subcompositor","shm","xdg_shell","dma_buf","explicit_synchronization","dnd"]
+default = ["subcompositor","xdg_shell","dma_buf","explicit_synchronization","dnd","shm"]#
 subcompositor = []
 shm = []
 xdg_shell = []
@@ -26,3 +29,5 @@ dma_buf = []
 dnd = []
 explicit_synchronization = []
 
+#[patch."https://github.com/Smithay/smithay"]
+#smithay = { path = "../smithay"}
