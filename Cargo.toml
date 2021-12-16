@@ -21,7 +21,7 @@ libc = "*"
 signal-hook = "*"
 
 [features]
-default = ["subcompositor","xdg_shell","dma_buf","explicit_synchronization","dnd","shm"]#
+default = ["subcompositor","xdg_shell","dma_buf","dnd","shm"]#
 subcompositor = []
 shm = []
 xdg_shell = []
